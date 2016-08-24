@@ -11,6 +11,7 @@
 #include "ps2USB.h"
 #include "timerInterrupt.h"
 #include "RPS.h"
+#include "LSA08.h"
 
 #define powerOffButton 4
 #define headingRefButton 0
@@ -19,12 +20,12 @@
 #define slowLoopLED 27
 #define miscLED 28
 #define maxRPM 200
-#define maxVELOCITY 132
-#define maxCHECKPOINT 5
+#define maxVELOCITY 80
+#define maxCHECKPOINT 6
 #define HEADING_TOL 1
-#define POSITION_TOL 1
+#define POSITION_TOL 3
 
-#define PLOT 1
+#define PLOT 0
 
 #if PLOT == 1
 	FILE *fp,*datum_fp;
@@ -40,18 +41,43 @@ float headingCorrection = 0;
 float headingError = 0;
 float positionError_x = 0;
 float positionError_y = 0;
+int backLineSensorError = 0, prev_backLineSensorError = 50;
+int leftLineSensorError = 0, prev_leftLineSensorError = 50;
+
 int rpiPort;
+enum {headingControl, positionControl, backLineSensorControl, leftLineSensorControl};
 
-float checkPoint[maxCHECKPOINT][2] = { 	{000.0,160.0},
-					{90.0,160.0},
-					{175.0,140.0},
-					{260.0,110.0},
-					{339.0,56.0} };
-int index = 0;
-
-struct point zero = {0.0,0.0}, destination = {0.0,0.0}, init = zero;
+struct point zero = {0.0, 0.0}, checkpoint, init = zero, destination = {0.0,0.0};
 struct omniDriveState stopState;
-enum {headingControl, positionControl};
+
+struct lineSensor leftLineSensor, backLineSensor;
+bool stageComplete = false, stageDetect = false;
+
+int index = 0;
+float heading_mem[maxCHECKPOINT] = {	90.0,
+			 		0.0,
+					-15.0,
+					-30.0,
+					-45.0,
+					-30.0 };
+float checkpoint_mem[maxCHECKPOINT][2] = { 	{-270.0,0.0},
+			 			{-270.0,115.0},
+						{-256,208},
+						{-208,292},
+						{-132,368},
+						{-52,507} };
+int lineSensorAdd_mem[maxCHECKPOINT] = { 	backLineSensor.address,
+						backLineSensor.address,
+						backLineSensor.address,
+						backLineSensor.address,
+						backLineSensor.address,
+						backLineSensor.address		};
+ 
+void leftJunctionDetect() {
+}
+
+void backJunctionDetect() {
+}
 
 void powerOff() {
 	if(powerOffPressed) return;
@@ -75,14 +101,26 @@ void powerOff() {
 	system("shutdown -h now");
 }
 
+
+void resetLineSensors(void) {
+	backLineSensorError = 0;
+	leftLineSensorError = 0;
+	prev_backLineSensorError = 50;
+    	prev_leftLineSensorError = 50;
+}
+
+
 void reset() {
 	resetRefHeading();
 	resetPIDvar(headingControl);
 	resetPIDvar(positionControl);
+	resetPIDvar(backLineSensorControl);
+	resetPIDvar(leftLineSensorControl);
+	resetLineSensors();
 	destination.x = 0;
 	destination.y = 0;
 	headingCorrection = 0;
-	setCurrentPosition(zero);
+	index = 0;
 }
 
 void ps2Activated() {
@@ -114,87 +152,147 @@ void slowTimerHandler() {
 	digitalWrite(slowLoopLED, !digitalRead(slowLoopLED));
 }
 
-struct uniCycleState limiter(struct uniCycleState state) {
-	if(state.vx > maxVELOCITY) {
-            printf("Warning: Trying to send Velocity greater than %f. Limit : %f. Sending %f.\r\n",maxVELOCITY);
-            state.vx = maxVELOCITY; //must be even
-	} else if(state.vx < -(maxVELOCITY+1)) {
-	    printf("Warning: Trying to send Velocity lesser than %f. Limit : %f. Sending %f.\r\n",-(maxVELOCITY+1));
-	    state.vx = -(maxVELOCITY+1); // must be odd
+void automationUpdate(void) {
+	if(stageComplete == true) {
+		index++;
+		init = checkpoint;
+		if(index > (maxCHECKPOINT - 1)) {
+			index = maxCHECKPOINT - 1;
+		}
 	}
-	if(state.vy > maxVELOCITY) {
-            printf("Warning: Trying to send Velocity greater than %f. Limit : %f. Sending %f.\r\n",maxVELOCITY);
-            state.vy = maxVELOCITY;
-	} else if(state.vx < -(maxVELOCITY+1)) {
-	    printf("Warning: Trying to send Velocity lesser than %f. Limit : %f. Sending %f.\r\n",-(maxVELOCITY+1));
-	    state.vy = -(maxVELOCITY+1);
-	}
-	if(state.w > maxVELOCITY) {
-            printf("Warning: Trying to send Velocity greater than %f. Limit : %f. Sending %f.\r\n",maxVELOCITY);
-            state.w = maxVELOCITY;
-	} else if(state.w < -(maxVELOCITY+1)) {
-	    printf("Warning: Trying to send Velocity lesser than %f. Limit : %f. Sending %f.\r\n",-(maxVELOCITY+1));
-	    state.w = -(maxVELOCITY+1);
-	}
-	return state;
+	desiredHeading = heading_mem[index];
+	checkpoint.x = checkpoint_mem[index][0];
+	checkpoint.y = checkpoint_mem[index][1];
+	destination = checkpoint;
+	//keep track of arena
 }
 
-struct uniCycleState traceLine(struct point curPos, float heading, struct point destinationPoint, struct point linePoint, float desiredHeading_) {
-    float lineTheta = radianToDegree(atan2((destinationPoint.y - linePoint.y), (destinationPoint.x - linePoint.x)));
-    struct point curPos_ = rotationalTransform(curPos, lineTheta);
+void readLineSensors__(void) {
+    backLineSensorError = readLineSensor(backLineSensor);
+    if(backLineSensorError == 255) {
+    	if(prev_backLineSensorError < 0) {
+		backLineSensorError = -50;
+	} else if(prev_backLineSensorError > 0) {
+		backLineSensorError = 50;
+	} else {
+		backLineSensorError = 0;
+	}
+    }
+    leftLineSensorError = readLineSensor(leftLineSensor);
+    if(leftLineSensorError == 255) {
+    	if(prev_leftLineSensorError < 0) {
+		leftLineSensorError = -50;
+	} else if(prev_leftLineSensorError > 0) {
+		leftLineSensorError = 50;
+	} else {
+		leftLineSensorError = 0;
+	}
+    }
+    prev_backLineSensorError = backLineSensorError;
+    prev_leftLineSensorError = leftLineSensorError;
+}
 
+struct uniCycleState traceLine(struct point curPos, float heading, struct point destinationPoint, struct point linePoint, float desiredHeading_, int ls_pos, int ls_jun) {
+    /* Calculate parameters of line to follow and rotate the X axis of coordinate system alonng line.*/
+	float lineTheta = radianToDegree(atan2((destinationPoint.x - linePoint.x), (destinationPoint.y - linePoint.y)));
+    struct point curPos_ = rotationalTransform(curPos, lineTheta);
+    struct point initPos_ = rotationalTransform(linePoint, lineTheta);
     struct point destinationPoint_ = rotationalTransform(destinationPoint, lineTheta);
+    float traversePathLength = fabs(destinationPoint_.x - initPos_.x);
     struct point translationalState_;
     
-    positionError_x = destinationPoint_.x - curPos_.x;
-    if(abs(positionError_x) > POSITION_TOL) {
-        translationalState_.x = maxVELOCITY * sigmoid(0.1*positionError_x);
-    } else {
-    	translationalState_.x = 0;
-    }    
+    /* Read line sensors and update variables as per given in parameters or do not update if specified*/
+    int n = -1, lineSensorPosError, lineSensorJunError;
+	readLineSensors__();
+	switch(ls_pos) {
+		case 0:
+			lineSensorPosError = -666;
+			break;
+		case 1:
+			lineSensorPosError = leftLineSensorError;
+			n = leftLineSensorControl;
+			break;
+		case 2:
+			lineSensorPosError = backLineSensorError;
+			n = backLineSensorControl;
+			break;	
+	}
+	switch(ls_jun) {
+		case 0:
+			lineSensorJunError = -666;
+			break;
+		case 1:
+			lineSensorJunError = leftLineSensorError;
+			break;
+		case 2:
+			lineSensorJunError = backLineSensorError;
+			break;	
+	}	
+	
+	/* Sigmoid along Y direction */
     positionError_y = destinationPoint_.y - curPos_.y;
     if(abs(positionError_y) > POSITION_TOL) {
-        translationalState_.y = PID(positionError_y, positionControl);
+		translationalState_.y = maxVELOCITY * sigmoid(0.05*positionError_y);
     } else {
-    	translationalState_.y = 0;
-    }    
+		translationalState_.y = 0;
+    }
+	
+	/* PID on line sensor error or X encoder error */
+    positionError_x = destinationPoint_.x - curPos_.x;
+    if(lineSensorPosError != -666) {
+    	if(abs(lineSensorPosError) > POSITION_TOL) {
+			translationalState_.x = PID(lineSensorPosError,n);
+    	} else {
+			translationalState_.x = 0;
+	    }
+	} else {
+		if(abs(positionError_x) > POSITION_TOL) {
+			translationalState_.x = PID(positionError_x,positionControl);
+    	} else {
+			translationalState_.x = 0;
+	    }
+	}
+	
     headingError = desiredHeading_ - heading;
-    if(abs(headingError) > HEADING_TOL) {
-    	headingCorrection = PID(headingError, headingControl);
+    
+	if(abs(headingError) > HEADING_TOL) {
+		headingCorrection = PID(headingError, headingControl);
     } else {
-	headingCorrection = 0;
+		headingCorrection = 0;
     }
 
-    struct point translationalState = rotationalTransform(translationalState_, -lineTheta);
+/*
+    if(fabs(lineSensorError_y) < 10 && fabs(positionError_x) < (0.5 * traversePathLength) && stageDetect == false) {
+	setCurrentPosition(checkpoint);
+	stageDetect = true;
+	stageComplete = false;
+    } else if(fabs(lineSensorError_y) > 36 && fabs(positionError_x) < (0.8 * traversePathLength) && stageComplete == true) {
+	stageDetect = false;
+    }
+*/    
+    if(translationalState_.x == 0 && translationalState_.y == 0 && headingCorrection == 0) {
+	stageComplete = true;
+    } else {
+	stageComplete = false;
+    }
+
+    struct point translationalState = rotationalTransform(translationalState_, -lineTheta-heading);
     struct uniCycleState state;
-    state.vx = translationalState.x;
+    state.vx = -translationalState.x;
     state.vy = translationalState.y;
+//    printf("%f %f %f %f :: %f\n",translationalState_.x,translationalState_.y,state.vx,state.vy,positionError_y);
     state.w = headingCorrection;
+    automationUpdate();
     return state;
 }
 
-struct uniCycleState getDesiredUniCycleState() {
-	struct uniCycleState desiredUniCycleState;
-	headingError = desiredHeading - getHeading();
-	if(abs(headingError) > HEADING_TOL) {
-		headingCorrection = PID(headingError, headingControl);
-	} else {
-        	headingCorrection = 0;
-	}
-	desiredUniCycleState.w = headingCorrection;
-	desiredUniCycleState.vy = (128 - ps2_getY()) * maxVELOCITY / 128;
-	desiredUniCycleState.vx = (ps2_getX() - 128) * maxVELOCITY / 128;
-	desiredUniCycleState = limiter(desiredUniCycleState);
-	return desiredUniCycleState;
-}
-
-char encodeByte(int rpm) {
-    if(rpm > 180) {
+char encodeByte(int rpm) {    
+    if(rpm > maxRPM) {
         printf("Warning: Trying to send Velocity greater than 180. Limit : 180. Sending 180.\r\n");
-        rpm = 180; //must be even
-    } else if(rpm < -181) {
+        rpm = 200; //must be even
+    } else if(rpm < -(maxRPM + 1)) {
         printf("Warning: Trying to send Velocity lesser than -181. Limit : -181. Sending -181.\r\n");
-        rpm = -181; // must be odd
+        rpm = -201; // must be odd
     }
     if(rpm < 0) {
         rpm = -rpm;
@@ -205,10 +303,29 @@ char encodeByte(int rpm) {
     }
 }
 
+struct uniCycleState getDesiredUniCycleState() {
+	struct uniCycleState desiredUniCycleState;
+	headingError = 0 - getHeading();
+	if(abs(headingError) > HEADING_TOL) {
+		headingCorrection = PID(headingError, headingControl);
+	} else {
+        	headingCorrection = 0;
+	}
+	desiredUniCycleState.w = headingCorrection;
+	desiredUniCycleState.vy = (128 - ps2_getY()) * maxVELOCITY / 128;
+	desiredUniCycleState.vx = -(128 - ps2_getX()) * maxVELOCITY / 128;
+	printf("%f\n",desiredUniCycleState.vy);
+	printf("%f\n",desiredUniCycleState.vx);
+	return desiredUniCycleState;
+}
+
+
 void transmitOmniState(struct omniDriveState state) {
-    printf("%d %d %d %f %f \r\n", state.aRPM, state.bRPM, state.cRPM, getCurrentPosition().x, getCurrentPosition().y);
+    state = rpmLimiter(state);
+//    printf("%d %d %d, %f %f, %f %f\r\n", state.aRPM, state.bRPM, state.cRPM, getCurrentPosition().x, getCurrentPosition().y,destination.x,destination.y);
+    printf("%f %f %f :: %f %f %f\r\n", getHeading(), getCurrentPosition().x, getCurrentPosition().y, desiredHeading, destination.x,destination.y);
 #if PLOT == 1
-    fprintf(fp,"%f %f\n",getCurrentPosition().x, getCurrentPosition().y);
+    fprintf(fp,"%f %f\n",zero.x, zero.y);
     fileLine++;
 #endif
     serialPutchar(rpiPort, 0x0A);
@@ -221,33 +338,30 @@ void timerHandler() {
 	if(!ps2Ready || !imuReady) {
 		transmitOmniState(stopState);
 	} else {
-//		transmitOmniState(transformUniToOmni(getDesiredUniCycleState(), 0));
-		transmitOmniState(transformUniToOmni(traceLine(getCurrentPosition(), getHeading(), destination, init, 0), 0));
+		transmitOmniState(transformUniToOmni(traceLine(getCurrentPosition(), getHeading(), destination, init, desiredHeading, lineSensorAdd_mem[index], 0), 240));
+//		transmitOmniState(transformUniToOmni(getDesiredUniCycleState(), 240));
 		digitalWrite(miscLED, !digitalRead(miscLED));
 	}
 }
 
 void CircleButtonPressed() {
-	index++;
-	if(index > (maxCHECKPOINT - 1)) {
-		index = maxCHECKPOINT - 1;
-	}
 }
 
 void CircleButtonReleased() {
 }
 
 void TriangleButtonPressed() {
-	index--;
-	if(index < 0) {
-		index = 0;
-	}
 }
 
 void TriangleButtonReleased() {
 }
 
 int main(){
+	checkpoint.x = checkpoint_mem[index][0];
+	checkpoint.y = checkpoint_mem[index][1];
+	desiredHeading = heading_mem[index];
+	destination = checkpoint;
+	init = zero;
 #if PLOT == 1
 	fp = fopen("../path.dat","w");
 	datum_fp = fopen("../datum.dat","w");
@@ -258,18 +372,28 @@ int main(){
 	stopState.aRPM = 0.0;
 	stopState.bRPM = 0.0;
 	stopState.cRPM = 0.0;
+	
+	leftLineSensor.address = 1;
+	leftLineSensor.uartPort = rpiPort;
+	leftLineSensor.UARTPin = 6;
+	leftLineSensor.junctionPin = 13;
+	
+	backLineSensor.address = 2;
+	backLineSensor.uartPort = rpiPort;
+	backLineSensor.UARTPin = 12;
+	backLineSensor.junctionPin = 5;
 
 	struct encoder encoderX;
-	encoderX.channelA_pin = 24;//23
-	encoderX.channelB_pin = 23;//24
-	encoderX. radius = 2.4;
+	encoderX.channelA_pin = 23;//23
+	encoderX.channelB_pin = 24;//24
+	encoderX.radius = 2.94;
 	encoderX.PPR = 360;
 
 	struct encoder encoderY;
 	encoderY.channelA_pin = 26;//26
 	encoderY.channelB_pin = 22;//22
-	encoderY. radius = 2.4;
-	encoderY.PPR = 360;	
+	encoderY.radius = 2.94;
+	encoderY.PPR = 360;		
 
 	if(wiringPiSetup() < 0) {
 		printf("Error setting up while setting wiringPi\n");
@@ -296,7 +420,9 @@ int main(){
 	digitalWrite(miscLED, LOW);
 	
 	initPIDController(0.05, 0.0, 0.5, headingControl);
-	initPIDController(5.0,0.0,0.0, positionControl);
+	initPIDController(4.0,0.0,0.0,positionControl);
+	initPIDController(1.0,0.0,0.0, leftLineSensorControl);
+	initPIDController(1.0,0.0,0.0, backLineSensorControl);
 	
 	enablePS2StatusInterrupt(&ps2Activated, &ps2Deactivated);
 	enableIMUStatusInterrupt(&imuActivated, &imuDeactivated);
@@ -307,15 +433,12 @@ int main(){
 	enableTriangleButton(&TriangleButtonPressed, &TriangleButtonReleased);
 	
 	initIMU();
-	initRPS(encoderX,encoderY,0.0,46.24);	
-	
+	initRPS(encoderX,encoderY,46,33,zero);	
+	initLineSensor(leftLineSensor,leftJunctionDetect);
+	initLineSensor(backLineSensor,backJunctionDetect);
+
 	initTimer(25000, &timerHandler);
 	while(1) {
-		init.x = checkPoint[index][0];
-		init.y = checkPoint[index][1];
-		destination.x = checkPoint[index][0];
-		destination.y = checkPoint[index][1];
-
 		sleep(1);
 	}
 }

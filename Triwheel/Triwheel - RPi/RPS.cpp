@@ -14,22 +14,24 @@ float offsetAngle;
 
 /* Encoder code */
 void encoderInterruptY() {
+	float theta = getHeading();
 	if(digitalRead(encoderY_.channelB_pin)) {
-		curPos.x += (k[ENCODER_Y] * sin(degreeToRadian(getHeading())));
-		curPos.y += (k[ENCODER_Y] * cos(degreeToRadian(getHeading())));
+		curPos.x += (k[ENCODER_Y] * cos(degreeToRadian(theta + 90)));
+		curPos.y += (k[ENCODER_Y] * sin(degreeToRadian(theta + 90)));
 	} else {
-		curPos.x -= (k[ENCODER_Y] * sin(degreeToRadian(getHeading())));
-		curPos.y -= (k[ENCODER_Y] * cos(degreeToRadian(getHeading())));
+		curPos.x += (k[ENCODER_Y] * cos(degreeToRadian(theta + 270)));
+		curPos.y += (k[ENCODER_Y] * sin(degreeToRadian(theta + 270)));
 	}
 }
 
 void encoderInterruptX() {
+	float theta = getHeading();
 	if(digitalRead(encoderX_.channelB_pin)) {
-		curPos.x += (k[ENCODER_X] * cos(degreeToRadian(getHeading())));
-		curPos.y += (k[ENCODER_X] * sin(degreeToRadian(getHeading())));
+		curPos.x += (k[ENCODER_X] * cos(degreeToRadian(theta)));
+		curPos.y += (k[ENCODER_X] * sin(degreeToRadian(theta)));
 	} else {
-		curPos.x -= (k[ENCODER_X] * cos(degreeToRadian(getHeading())));
-		curPos.y -= (k[ENCODER_X] * sin(degreeToRadian(getHeading())));
+		curPos.x += (k[ENCODER_X] * cos(degreeToRadian(theta+180)));
+		curPos.y += (k[ENCODER_X] * sin(degreeToRadian(theta+180)));
 	}
 }
 
@@ -92,7 +94,8 @@ void setCurrentPosition(struct point pos) {
 
 struct point getCurrentPosition() {
 	struct point pos = RPS_getPosition();
-	float theta = degreeToRadian(offsetAngle + getHeading());
+	float theta = offsetAngle + getHeading();
+	theta = degreeToRadian(theta);
 	pos.x -= (distanceFromCenter * cos(theta));
 	pos.y -= (distanceFromCenter * sin(theta));
 	return pos; 

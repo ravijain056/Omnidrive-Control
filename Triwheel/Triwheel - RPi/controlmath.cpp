@@ -1,7 +1,7 @@
 #include "controlmath.h"
 #include <math.h>
 
-float sigmoid(int x) {
+float sigmoid(float x) {
 	return ((1/(1+exp(-x))) - 0.5) * 2;
 }
 
@@ -28,15 +28,14 @@ struct point rotationalTransform(struct point point_, float theta) {
 struct point rotationalTransform(float x, float y, float theta){
     struct point pos;
     theta = degreeToRadian(theta);
-    pos.x = x * cos(theta) + y * sin(theta);
-    pos.y = y * cos(theta) - x * sin(theta);
+    pos.x = x * cos(theta) - y * sin(theta);
+    pos.y = y * cos(theta) + x * sin(theta);
     return pos;
 }
 
-struct omniDriveState transformUniToOmni(struct uniCycleState unistate, float alpha) {
+struct omniDriveState transformUniToOmni(struct uniCycleState unistate, float alpha) {	
     struct omniDriveState transformedState;
     float wR = unistate.w * BotRadius;
-/*
     alpha = degreeToRadian(alpha);
     float v = sqrt(unistate.vx * unistate.vx + unistate.vy * unistate.vy);
     float phi = atan2(unistate.vy, unistate.vx);
@@ -44,14 +43,26 @@ struct omniDriveState transformUniToOmni(struct uniCycleState unistate, float al
     float cosphi = cos(phi);
     float sinphi = sin(phi);
    
-    transformedState.flRPM = ((v * ((cos(alpha + flTheta) * cosphi) + (sin(alpha + flTheta) * sinphi))) + wR ) * 60.0 / wheelCircumference;
-    transformedState.frRPM = ((v * ((cos(alpha + frTheta) * cosphi) + (sin(alpha + frTheta) * sinphi))) + wR ) * 60.0 / wheelCircumference;
-    transformedState.brRPM = ((v * ((cos(alpha + brTheta) * cosphi) + (sin(alpha + brTheta) * sinphi))) + wR ) * 60.0 / wheelCircumference;
-    transformedState.blRPM = ((v * ((cos(alpha + blTheta) * cosphi) + (sin(alpha + blTheta) * sinphi))) + wR ) * 60.0 / wheelCircumference;
-*/
-    transformedState.aRPM = -(unistate.vx/2) - (unistate.vy*0.866) + wR;
-    transformedState.bRPM = -(unistate.vx/2) + (unistate.vy*0.866) + wR;
-    transformedState.cRPM = unistate.vx + wR;
+    transformedState.aRPM = ((v * ((cos(alpha + wheelA_theta) * cosphi) + (sin(alpha + wheelA_theta) * sinphi))) + wR ) * 60.0 / wheelCircumference;
+    transformedState.bRPM = ((v * ((cos(alpha + wheelB_theta) * cosphi) + (sin(alpha + wheelB_theta) * sinphi))) + wR ) * 60.0 / wheelCircumference;
+    transformedState.cRPM = ((v * ((cos(alpha + wheelC_theta) * cosphi) + (sin(alpha + wheelC_theta) * sinphi))) + wR ) * 60.0 / wheelCircumference;
     return transformedState;
 }
 
+struct omniDriveState rpmLimiter(struct omniDriveState state) {
+	float max,factor = 1,dividend = 1;
+	(fabs(state.aRPM) >= fabs(state.bRPM)) ? max = fabs(state.aRPM) : max = fabs(state.bRPM);
+	(max >= fabs(state.cRPM)) ? max = max : max = fabs(state.cRPM);
+	dividend = max;
+	if(max > maxRPM) {
+		while(dividend > maxRPM) {
+			dividend = max / factor;
+			factor += 0.5;
+		}
+		factor -= 0.5;
+		state.aRPM /= factor;	
+		state.bRPM /= factor;	
+		state.cRPM /= factor;	
+	}
+	return state;
+}
