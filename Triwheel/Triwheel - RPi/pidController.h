@@ -1,7 +1,7 @@
 #ifndef pidController
 #define pidController
 
-#define maxN 2
+#define maxN 3
 
 void initPIDController(float kp_, float ki_, float kd_, int i);
 float PID(float error, int i);

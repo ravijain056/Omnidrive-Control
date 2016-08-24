@@ -52,6 +52,11 @@ void initRPS(struct encoder encoderX, struct encoder encoderY,  float distanceFr
 	k[ENCODER_X] = (float)(2 * PI * encoderX.radius) / encoderX.PPR;
 	k[ENCODER_Y] = (float)(2 * PI * encoderY.radius) / encoderY.PPR;
 	
+	pinMode(encoderX.channelA_pin, INPUT);
+	pullUpDnControl(encoderX.channelA_pin, PUD_DOWN);
+	pinMode(encoderY.channelA_pin, INPUT);
+	pullUpDnControl(encoderY.channelA_pin, PUD_DOWN);
+	
 	if(encoderX.channelB_pin!=-1) {
 		pinMode(encoderX.channelB_pin, INPUT);
 	}
