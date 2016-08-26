@@ -1,0 +1,239 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>2. Setting up the three wheel omnidrive system &mdash; Omnidrive-Control 0.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="top" title="Omnidrive-Control 0.0 documentation" href="../index.html" />
+    <link rel="up" title="Three Wheel Omnidrive" href="threewheel-0.0.html" />
+    <link rel="next" title="Four Wheel Omnidrive" href="../fourwheel/fourwheel-0.0.html" />
+    <link rel="prev" title="1. Theory behind the project" href="threewheel-0.0-theory.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="setting-up-the-three-wheel-omnidrive-system">
+<h1>2. Setting up the three wheel omnidrive system<a class="headerlink" href="#setting-up-the-three-wheel-omnidrive-system" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="hardware">
+<h2>2.1. Hardware<a class="headerlink" href="#hardware" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="resources">
+<h3>2.1.1. Resources<a class="headerlink" href="#resources" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="41%" />
+<col width="59%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>Upper controller</td>
+<td>Raspberry Pi3 B+ with raspbian-wheezy</td>
+</tr>
+<tr class="row-even"><td>Angular position feedback</td>
+<td>Pololu minimu9 v3</td>
+</tr>
+<tr class="row-odd"><td>Cartesian position feedback</td>
+<td>Autonics rotary shaft encoders</td>
+</tr>
+<tr class="row-even"><td>Lower controller</td>
+<td>2x Tiva TM4C123GH6PM Launchpad</td>
+</tr>
+<tr class="row-odd"><td>Motor drivers</td>
+<td>Hercules motor drivers</td>
+</tr>
+<tr class="row-even"><td>Motor</td>
+<td>DC Planetary geared motor</td>
+</tr>
+<tr class="row-odd"><td>RPM feedback</td>
+<td>Pepper and Fuchs rotary shaft encoders</td>
+</tr>
+<tr class="row-even"><td>Power source</td>
+<td>2x 12V LiPo batteries</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="setup">
+<h3>2.1.2. Setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h3>
+<p>The following describes the PCB board used for hardware in Robocon 2016 and on which this version was developed.</p>
+<p>//Need PCB material</p>
+</div>
+</div>
+<div class="section" id="software">
+<h2>2.2. Software<a class="headerlink" href="#software" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><ol class="arabic">
+<li><p class="first"><strong>Raspberry Pi3 B+</strong> -</p>
+<ul>
+<li><p class="first">You can follow the regular tutorials from Google about installing wheezy on Raspberry Pi. Downlad /<em>Add image file of Raspberry Pi</em>/ &#8220;raspian-wheezy&#8221; and burn image on SD card, plug it in Raspberry Pi and that&#8217;s it.</p>
+<blockquote>
+<div><p>The image file consists of already setup tightvncserver, minIMU9-ahrs and wiringPi libraries in it. For a fresh installation you will have to install them personally.</p>
+</div></blockquote>
+</li>
+<li><p class="first"><a class="reference external" href="http://www.putty.org/">&#8220;Putty&#8221;</a> can be used to establish a SSH between computer and RPi.</p>
+</li>
+<li><p class="first"><a class="reference external" href="http://www.tightvnc.com/download.php">&#8220;TightVNCserver&#8221;</a> can be used to set up a virtual desktop of RPi on your PC screen. Follow up any tutorial on Google to set it up.</p>
+</li>
+<li><p class="first">Open &#8220;terminal&#8221; on RPi and type <code class="docutils literal"><span class="pre">sudo</span> <span class="pre">raspi-config</span></code>. A menu will appear,</p>
+</li>
+</ul>
+<img alt="../_images/raspiconfig.jpg" src="../_images/raspiconfig.jpg" />
+<p>Click on <code class="docutils literal"><span class="pre">Expand</span> <span class="pre">file</span> <span class="pre">system</span></code> and affirm it.</p>
+<ul class="simple">
+<li>Now go to <code class="docutils literal"><span class="pre">Advanced</span> <span class="pre">Options</span></code> and select if there&#8217;s an I2C option then make sure it is enabled.</li>
+</ul>
+</li>
+<li><p class="first"><strong>minIMU9-ahrs</strong> -</p>
+<p><strong>[Read through this section only if you are doing a OS install from a fresh image file]</strong></p>
+<ul class="simple">
+<li>minIMU9-ahrs is the IMU package we will be using to interface the Pololu IMU. A detailed description on its setup can be found on <a class="reference external" href="https://github.com/DavidEGrayson/minimu9-ahrs/wiki">minIMU9-ahrs repository</a></li>
+</ul>
+</li>
+<li><p class="first"><strong>Tiva controllers</strong> -</p>
+<ul class="simple">
+<li>Code Composer Studio is a great IDE for developing codes on Texas Microcontrollers. You can download the latest version of the software from here : <a class="reference external" href="http://processors.wiki.ti.com/index.php/Download_CCS">CCS download page</a></li>
+<li>If you face any troubles while installing, try the offline version.</li>
+<li>The following PDF contains a good set of tutorials on how to use ARM APIs of Code Composer Studio to code Tiva controllers. <a class="reference download internal" href="../_downloads/TM4C123G_LaunchPad_Workshop_Workbook.pdf" download=""><code class="xref download docutils literal"><span class="pre">TM4C123G</span> <span class="pre">LaunchPad</span> <span class="pre">Workbook</span></code></a></li>
+</ul>
+</li>
+<li><dl class="first docutils">
+<dt><strong>SimPlot</strong> -</dt>
+<dd><p class="first">This is a simple plotting software where one can visualize the system&#8217;s response in form of graphs. You can download the software from : <a class="reference external" href="https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/pushpak/SimPlot%20Ver1-1.zip">SimPlot download page</a></p>
+<p class="last">You can refer this to know about the packet format to be sent to simplot - <a class="reference external" href="http://forum.arduino.cc/index.php?topic=58911.0">SimPlot tutorial page</a></p>
+</dd>
+</dl>
+</li>
+</ol>
+</div></blockquote>
+</div>
+<div class="section" id="installing-the-repo">
+<h2>2.3. Installing the repo<a class="headerlink" href="#installing-the-repo" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><ol class="arabic">
+<li><p class="first">Clone the repo to your local computer with the above softwares setup and hardware connections made.</p>
+<p><code class="docutils literal"><span class="pre">**WARNING**</span> <span class="pre">:</span> <span class="pre">CHECK</span> <span class="pre">YOUR</span> <span class="pre">HARDWARE</span> <span class="pre">CONNECTIONS</span> <span class="pre">PROPERLY.</span> <span class="pre">YOU</span> <span class="pre">DO</span> <span class="pre">NOT</span> <span class="pre">WANT</span> <span class="pre">TO</span> <span class="pre">BURN</span> <span class="pre">ANY</span> <span class="pre">COSTLY</span> <span class="pre">INSTRUMENTS</span> <span class="pre">OR</span> <span class="pre">ELECTRONICS</span></code></p>
+</li>
+<li><p class="first">Open Code Composer Studio and set the working space of your choice. Click on &#8220;Projects &gt; Import CCS projects&#8221;. Browse to the cloned repo and click OK.</p>
+</li>
+<li><p class="first">It will show some projects in the list. Choose &#8220;Triwheel - Two Wheel&#8221; and &#8220;Triwheel - One Wheel&#8221; of your versions and click Finish. You will be able to see imported projects in the Project Explorer.</p>
+</li>
+<li><p class="first">Now open One Wheel project and connect the Tiva Launchpad connected to one wheel for control and burn the code by clicking &#8220;Debug&#8221;.</p>
+</li>
+<li><p class="first">Similarly open Two Wheel project and connect the Tiva Launchpad connected to two wheels for control and burn the code by clicking &#8220;Debug&#8221;.</p>
+</li>
+<li><p class="first">Let the program flow continuous and reset the two controllers. Open a serial monitor and select &#8220;Stellaris in circuit debug interface&#8221; COM and you will be able to see status of the controller. If there is no error, move on to the next step.</p>
+</li>
+<li><p class="first">Connect Raspberry Pi 3 with your PC using SSH and VNCserver. Connect PS2 controller to RPi&#8217;s USB port.</p>
+</li>
+<li><p class="first">Open &#8220;terminal&#8221; in RPi and type <code class="docutils literal"><span class="pre">cd</span> <span class="pre">Triwheel</span> <span class="pre">RPi</span></code>.</p>
+</li>
+<li><p class="first">Type <code class="docutils literal"><span class="pre">sudo</span> <span class="pre">./main.out</span></code> and look for the status messages displayed in the console. If there are no errors it will start printing the RPM values being sent to each wheel.</p>
+</li>
+</ol>
+</div></blockquote>
+</div>
+<div class="section" id="disclaimer">
+<h2>2.4. Disclaimer<a class="headerlink" href="#disclaimer" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div>Reset the Tiva after completely starting up codes in all controllers. You don&#8217;t want to have it some random RPM that crawled in during RPi&#8217;s booting and go mad as soon as you switch on the motors.</div></blockquote>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">2. Setting up the three wheel omnidrive system</a><ul>
+<li><a class="reference internal" href="#hardware">2.1. Hardware</a><ul>
+<li><a class="reference internal" href="#resources">2.1.1. Resources</a></li>
+<li><a class="reference internal" href="#setup">2.1.2. Setup</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#software">2.2. Software</a></li>
+<li><a class="reference internal" href="#installing-the-repo">2.3. Installing the repo</a></li>
+<li><a class="reference internal" href="#disclaimer">2.4. Disclaimer</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="threewheel-0.0.html">Three Wheel Omnidrive</a><ul>
+      <li>Previous: <a href="threewheel-0.0-theory.html" title="previous chapter">1. Theory behind the project</a></li>
+      <li>Next: <a href="../fourwheel/fourwheel-0.0.html" title="next chapter">Four Wheel Omnidrive</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/threewheel/threewheel-0.0-setup.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Ravi Jain.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      
+      |
+      <a href="../_sources/threewheel/threewheel-0.0-setup.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

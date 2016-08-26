@@ -1,0 +1,427 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>3. Experimental Data &amp; Analysis &mdash; Omnidrive-Control 0.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="top" title="Omnidrive-Control 0.0 documentation" href="../index.html" />
+    <link rel="up" title="Three Wheel Omnidrive" href="threewheel-0.0.html" />
+    <link rel="next" title="Four Wheel Omnidrive" href="../fourwheel/fourwheel-0.0.html" />
+    <link rel="prev" title="2. Setting up the three wheel omnidrive system" href="threewheel-0.0-setup.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="experimental-data-analysis">
+<h1>3. Experimental Data &amp; Analysis<a class="headerlink" href="#experimental-data-analysis" title="Permalink to this headline">¶</a></h1>
+<p>In May - June 2016, the following experiments were conducted on the motors and robot to have a <em>&#8220;measured&#8221;</em> quality check on the modules of the lower and upper system.</p>
+<p>The following schematic displays the zoomed in view of the lower control system with modules defined,</p>
+<img alt="../_images/module.png" src="../_images/module.png" />
+<p>So the aim and motive behind these experiments were to perfect these submodules that decide the fate of the system over and above just PID tuning. Parameters were tweaked and plots were studied to understand the modules&#8217; nature.</p>
+<div class="section" id="rpm-calc">
+<h2>3.1. RPM Calc<a class="headerlink" href="#rpm-calc" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div>QEI (Quadrature Encoder Interface) is a special feature in Tiva TM4C123G Launchpad which is used to find RPM of wheels by reading quadrature signals from encoder over a given QEI frequency.</div></blockquote>
+<div class="section" id="scatter-of-rpm-readings-wrt-qei-frequency">
+<h3>3.1.1. Scatter of RPM readings wrt QEI frequency<a class="headerlink" href="#scatter-of-rpm-readings-wrt-qei-frequency" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div><p><strong>Aim</strong> : To find out the optimal QEI frequency which gives fast rpm measures as well as less spread or fluctuations in RPM calculation.</p>
+<p><strong>Expectation</strong> : We expect to determine the optimal and fastest frequency at which the feedback loop in the RPM control loop can be run. The bounds in which the system can get fast feedback as well as reliable.</p>
+<p><strong>GitHub repo</strong> : /<em>GitHub repo link</em>/</p>
+<p><strong>Plots</strong> :</p>
+</div></blockquote>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="30%" />
+<col width="23%" />
+<col width="27%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td colspan="2"><img alt="rpmspread1" src="../_images/SpreadOfRPM.png" /></td>
+<td colspan="2"><img alt="rpmspread2" src="../_images/SpreadOfRPMKiel.png" /></td>
+</tr>
+<tr class="row-even"><td colspan="2">Plot from data gathered
+by Code Composer API code</td>
+<td colspan="2">Plot from data gathered by
+Kiel code used in Robocon 16</td>
+</tr>
+<tr class="row-odd"><td colspan="4"><strong>Legend</strong></td>
+</tr>
+<tr class="row-even"><td>Purple</td>
+<td>10Hz</td>
+<td>Blue</td>
+<td>4Hz(Robocon16)</td>
+</tr>
+<tr class="row-odd"><td>Blue</td>
+<td>20Hz</td>
+<td>Red</td>
+<td>10Hz</td>
+</tr>
+<tr class="row-even"><td>Red</td>
+<td>30Hz</td>
+<td>Yellow</td>
+<td>20Hz</td>
+</tr>
+<tr class="row-odd"><td>Yellow</td>
+<td>40Hz</td>
+<td>Purple</td>
+<td>30Hz</td>
+</tr>
+<tr class="row-even"><td colspan="2"><div class="first last line-block">
+<div class="line"><br /></div>
+</div>
+</td>
+<td>Green</td>
+<td>40Hz</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<div><strong>Conclusions</strong> : Lower frequency of QEI gives better results of RPM but one must maintain the balance so that the system response does not suffer.</div></blockquote>
+</div>
+<div class="section" id="authenticity-of-rpm-calc">
+<h3>3.1.2. Authenticity of RPM calc<a class="headerlink" href="#authenticity-of-rpm-calc" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div><p><strong>Aim</strong> : To find the deviation in the plots of RPM from Tachometer and QEI</p>
+<p><strong>Expectation</strong> : Coincidence of the two plots</p>
+<p><strong>GitHub repo</strong> : /<em>GitHub repo link</em>/</p>
+<p><strong>Plots</strong> :</p>
+</div></blockquote>
+<table border="1" class="docutils">
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><img alt="rpmcomp1" src="../_images/PWMvsRPM-10Hz.png" /></td>
+<td><img alt="rpmcomp2" src="../_images/PWMvsRPM-40Hz.png" /></td>
+</tr>
+<tr class="row-even"><td>Plot from data gathered
+by running QEI at 10Hz</td>
+<td>Plot from data gathered by
+running QEI at 40Hz
+<strong>with 44values average</strong></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<div><strong>Conclusion</strong> : Despite of the fact that higher QEi frequency skews the readings more, a moving array correction can give very authentic rpm measures.</div></blockquote>
+</div>
+</div>
+<div class="section" id="set-pwm">
+<h2>3.2. Set PWM<a class="headerlink" href="#set-pwm" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div>This might not seem a very decisive factor but this is a hidden pain in the back. If you observe randomly generated PWM vs RPM graph then you will observe it is of the nature of a saturated positive slope graph. This means that with proportional increase in PWM, RPM might not increase that much. This would mean for the same error at higher RPM the control loop would have to work more to nullify error and work less at lower RPM as it is almost linear there. PWM frequency affects this factor a lot. So this study will be about its affect and also its affect on motor humming, heating, motor driver failure etc.</div></blockquote>
+<p>Also the motor drivers have a upper limit on the PWM frequency they can take which can be found in its datasheet</p>
+<div class="section" id="affect-of-pwm-frequency-on-pwm-vs-rpm-plots">
+<h3>3.2.1. Affect of PWM frequency on PWM vs RPM plots<a class="headerlink" href="#affect-of-pwm-frequency-on-pwm-vs-rpm-plots" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div><p><strong>Aim</strong> : To plot and study the affect of PWM frequency on PWM vs RPM plots</p>
+<p><strong>Expectation</strong> : To settle at a frequency which is under limits of motor driver and also gives satisfactory linear PWM vs RPM plot.</p>
+<p><strong>GitHub repo</strong> : /<em>GitHub repo link</em>/</p>
+<p><strong>Plots</strong> :</p>
+</div></blockquote>
+<table border="1" class="docutils">
+<colgroup>
+<col width="100%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><img alt="rpmpwm" src="../_images/RPMvsPWM.png" /></td>
+</tr>
+<tr class="row-even"><td>Plot from data gathered
+by running QEI at 10Hz</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="docutils">
+<colgroup>
+<col width="11%" />
+<col width="11%" />
+<col width="11%" />
+<col width="11%" />
+<col width="11%" />
+<col width="11%" />
+<col width="11%" />
+<col width="11%" />
+<col width="8%" />
+<col width="6%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td colspan="10"><strong>OBSERVATION TABLE</strong></td>
+</tr>
+<tr class="row-even"><td colspan="2">200Hz</td>
+<td colspan="2">500Hz</td>
+<td colspan="2">1kHz</td>
+<td colspan="2">2kHz</td>
+<td colspan="2">3kHz</td>
+</tr>
+<tr class="row-odd"><td>RPM</td>
+<td>PWM</td>
+<td>RPM</td>
+<td>PWM</td>
+<td>RPM</td>
+<td>PWM</td>
+<td>RPM</td>
+<td>PWM</td>
+<td>RPM</td>
+<td>PWM</td>
+</tr>
+<tr class="row-even"><td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr class="row-odd"><td>130</td>
+<td>4000</td>
+<td>88</td>
+<td>1600</td>
+<td>61</td>
+<td>800</td>
+<td>40</td>
+<td>400</td>
+<td>32</td>
+<td>266</td>
+</tr>
+<tr class="row-even"><td>225</td>
+<td>8000</td>
+<td>185</td>
+<td>3200</td>
+<td>152</td>
+<td>1600</td>
+<td>116</td>
+<td>800</td>
+<td>98</td>
+<td>532</td>
+</tr>
+<tr class="row-odd"><td>270</td>
+<td>12000</td>
+<td>240</td>
+<td>4800</td>
+<td>212</td>
+<td>2400</td>
+<td>177</td>
+<td>1200</td>
+<td>151</td>
+<td>798</td>
+</tr>
+<tr class="row-even"><td>290</td>
+<td>16000</td>
+<td>279</td>
+<td>6400</td>
+<td>250</td>
+<td>3200</td>
+<td>218</td>
+<td>1600</td>
+<td>195</td>
+<td>1064</td>
+</tr>
+<tr class="row-odd"><td>302</td>
+<td>20000</td>
+<td>290</td>
+<td>8000</td>
+<td>275</td>
+<td>4000</td>
+<td>250</td>
+<td>2000</td>
+<td>228</td>
+<td>1330</td>
+</tr>
+<tr class="row-even"><td>312</td>
+<td>24000</td>
+<td>302</td>
+<td>9600</td>
+<td>291</td>
+<td>4800</td>
+<td>270</td>
+<td>2400</td>
+<td>253</td>
+<td>1596</td>
+</tr>
+<tr class="row-odd"><td>318</td>
+<td>28000</td>
+<td>311</td>
+<td>11200</td>
+<td>302</td>
+<td>5600</td>
+<td>285</td>
+<td>2800</td>
+<td>271</td>
+<td>1862</td>
+</tr>
+<tr class="row-even"><td>322</td>
+<td>32000</td>
+<td>319</td>
+<td>12800</td>
+<td>310</td>
+<td>6400</td>
+<td>300</td>
+<td>3200</td>
+<td>286</td>
+<td>2128</td>
+</tr>
+<tr class="row-odd"><td>328</td>
+<td>36000</td>
+<td>324</td>
+<td>14400</td>
+<td>316</td>
+<td>7200</td>
+<td>310</td>
+<td>3600</td>
+<td>303</td>
+<td>2394</td>
+</tr>
+<tr class="row-even"><td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>Humming</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>Less
+humming</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-odd"><td>I at10%</td>
+<td>0.17</td>
+<td colspan="2">0.16</td>
+<td colspan="2">0.15</td>
+<td colspan="2">0.14</td>
+<td colspan="2">0.13</td>
+</tr>
+<tr class="row-even"><td>I at90%</td>
+<td>0.26</td>
+<td colspan="2">0.24</td>
+<td colspan="2">0.25</td>
+<td colspan="2">0.24</td>
+<td colspan="2">0.25</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<div><p><strong>Conclusion</strong> : Despite of the fact that higher QEI frequency skews the readings more, a moving array correction can give very authentic rpm measures.</p>
+<p>Higher frequency (kept in limit of Motor driver i.e. 3kHz in our case) linearizes the PWM vs RPM plot but at lower duty cycle for high frequency it affects torque of motor and also can lead heating of motor and motor driver</p>
+<p>Motor heats at higher frequency due to inductance</p>
+</div></blockquote>
+</div>
+</div>
+<div class="section" id="motor-characteristcis">
+<h2>3.3. Motor characteristcis<a class="headerlink" href="#motor-characteristcis" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div>Motor characteristic graphs like N vs I <sub>a</sub> , N vs T etc were observed and plotted and put in an excel sheet to help as reference for the customized motor driver designers of the team. The srpeadsheet can be found <code class="xref download docutils literal"><span class="pre">here</span></code></div></blockquote>
+</div>
+<div class="section" id="motor-hysteresis">
+<h2>3.4. Motor hysteresis<a class="headerlink" href="#motor-hysteresis" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">3. Experimental Data &amp; Analysis</a><ul>
+<li><a class="reference internal" href="#rpm-calc">3.1. RPM Calc</a><ul>
+<li><a class="reference internal" href="#scatter-of-rpm-readings-wrt-qei-frequency">3.1.1. Scatter of RPM readings wrt QEI frequency</a></li>
+<li><a class="reference internal" href="#authenticity-of-rpm-calc">3.1.2. Authenticity of RPM calc</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#set-pwm">3.2. Set PWM</a><ul>
+<li><a class="reference internal" href="#affect-of-pwm-frequency-on-pwm-vs-rpm-plots">3.2.1. Affect of PWM frequency on PWM vs RPM plots</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#motor-characteristcis">3.3. Motor characteristcis</a></li>
+<li><a class="reference internal" href="#motor-hysteresis">3.4. Motor hysteresis</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="threewheel-0.0.html">Three Wheel Omnidrive</a><ul>
+      <li>Previous: <a href="threewheel-0.0-setup.html" title="previous chapter">2. Setting up the three wheel omnidrive system</a></li>
+      <li>Next: <a href="../fourwheel/fourwheel-0.0.html" title="next chapter">Four Wheel Omnidrive</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/threewheel/threewheel-0.0-experiment.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Ravi Jain.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      
+      |
+      <a href="../_sources/threewheel/threewheel-0.0-experiment.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

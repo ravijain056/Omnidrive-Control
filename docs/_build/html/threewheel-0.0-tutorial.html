@@ -1,0 +1,185 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Theory behind the project &mdash; Omnidrive-Control 0.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="top" title="Omnidrive-Control 0.0 documentation" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="theory-behind-the-project">
+<h1>Theory behind the project<a class="headerlink" href="#theory-behind-the-project" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="the-mobility-equations">
+<h2>The mobility equations<a class="headerlink" href="#the-mobility-equations" title="Permalink to this headline">¶</a></h2>
+<dl class="docutils">
+<dt>There are two main classical models of representing any omnidrive mobile body,</dt>
+<dd><ol class="first last arabic simple">
+<li>Unicycle model</li>
+<li>Omnidrive model</li>
+</ol>
+</dd>
+</dl>
+<div class="section" id="unicycle-model">
+<span id="unicycle"></span><h3>Unicycle model<a class="headerlink" href="#unicycle-model" title="Permalink to this headline">¶</a></h3>
+<dl class="docutils">
+<dt>Unicycle model has the control over the following parameters of the robot to make it move :</dt>
+<dd><ol class="first last arabic simple">
+<li>Linear velocity of robot chassis</li>
+<li>Angular velocity of robot chassis</li>
+</ol>
+</dd>
+</dl>
+<p>This is model has a more physical sense and comparability to our daily life. Say for example, you want your robot to go at 10m/s and then turn 90?. But while controlling a robot using motors and wheels you need to convert this to RPM commands for each motor, which is the Omnidrive model.</p>
+</div>
+<div class="section" id="omnidrive-model">
+<span id="omnidrive"></span><h3>Omnidrive model<a class="headerlink" href="#omnidrive-model" title="Permalink to this headline">¶</a></h3>
+<dl class="docutils">
+<dt>Omnidrive model for a three wheel drive chassis has the following paramters of the robot to make it move :</dt>
+<dd><ol class="first last arabic simple">
+<li>RPM of wheel 1</li>
+<li>RPM of wheel 2</li>
+<li>RPM of wheel 3</li>
+</ol>
+</dd>
+</dl>
+</div>
+<div class="section" id="mathematical-model">
+<h3>Mathematical model<a class="headerlink" href="#mathematical-model" title="Permalink to this headline">¶</a></h3>
+<p>The mathematical model derived from kinematics of the three wheel robot without consideration of the friction or other external factors is as shown below,</p>
+<blockquote>
+<div><p><span class="math">\(RPM _a = V _x * 0.5 - V _y * 0.866 + w * R\)</span></p>
+<p><span class="math">\(RPM _b = V _x * 0.5 + V _y * 0.866 + w * R\)</span></p>
+<p><span class="math">\(RPM _c = V _x + w * R\)</span></p>
+<p>where RPM <sub>a</sub>, RPM <sub>b</sub>, RPM <sub>c</sub> are RPMs of wheels A,B,C</p>
+<blockquote>
+<div><p>V <sub>x</sub> is the component of velocity of robot in x direction</p>
+<p>V <sub>y</sub> is the component of velocity of robot in y direction</p>
+<p>w is Angular velocity of robot</p>
+<p>R is Radius of robot chassis</p>
+</div></blockquote>
+</div></blockquote>
+<p>You can check the for the derivation by referring to the following <a class="reference download internal" href="_downloads/n-wheel-drive-paper.pdf" download=""><code class="xref download docutils literal"><span class="pre">this</span> <span class="pre">pdf</span></code></a></p>
+<p>This is the model we have used in this version of the project.</p>
+</div>
+</div>
+<div class="section" id="system-description">
+<h2>System description<a class="headerlink" href="#system-description" title="Permalink to this headline">¶</a></h2>
+<p>The following represents the system schematics of this version.</p>
+<img alt="_images/threewheelschematic.png" src="_images/threewheelschematic.png" />
+<p>The following section will give a brief idea of each blocks role,</p>
+<blockquote>
+<div><ul class="simple">
+<li><strong>Upper Control System</strong> :<ul>
+<li><strong>Upper controller</strong> : The Upper controller calculates the <a class="reference internal" href="threewheel/threewheel-0.0-theory.html#unicycle"><span class="std std-ref">Unicycle model</span></a> parameters of the robot, converts it to <a class="reference internal" href="threewheel/threewheel-0.0-theory.html#omnidrive"><span class="std std-ref">Omnidrive model</span></a> and sends RPM in the form of packets to the lower controller to execute the desired RPM so that the robot reaches the desired unicycle State and hence the desired physical state. It takes the feedback from the physical orientation of the robot as well as its physical location and applies PID controller to calculate the unicycle parameters.</li>
+<li><strong>Angular position feedback</strong> : This is an IMU module used to calculate the magentometer readings to find the relative angular position of the IMU and hence the robot from the magnetic axis.</li>
+<li><strong>Cartesian position feedback</strong> : This is a feedback system to find out the distance traversed by the bot in X and Y direction and hence keep a trace of the path followed by the robot. In this version, we have used <strong>two dummy wheels arranged orthogonally</strong> with <span class="xref std std-ref">Encoder</span> on the chassis. So this would give distances travelled in X and Y direction.</li>
+</ul>
+</li>
+<li><strong>Lower Control System</strong> :<ul>
+<li><strong>Lower controller</strong> : It contains the logic to drive the motor at the rpm command given using a P controller. Irrespective of change in load on the motor the motor should maintain the desired RPM in the least possible time which is seen by the lower controller. It also calculates the wheel rpm from the <span class="xref std std-ref">Encoder</span> for feedback rpm. The Upper and Lower conrtol system communicate with the help of UART.</li>
+<li><strong>Motor actuators/Motors/Wheels</strong> : Sending PWM signals to <span class="xref std std-ref">motor-drivers</span> of different duty cycles can vary motor RPM and hence wheel RPM.</li>
+<li><strong>RPM feedback</strong> : Rotary shaft encoders are used for RPM feedback.</li>
+</ul>
+</li>
+</ul>
+</div></blockquote>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Theory behind the project</a><ul>
+<li><a class="reference internal" href="#the-mobility-equations">The mobility equations</a><ul>
+<li><a class="reference internal" href="#unicycle-model">Unicycle model</a></li>
+<li><a class="reference internal" href="#omnidrive-model">Omnidrive model</a></li>
+<li><a class="reference internal" href="#mathematical-model">Mathematical model</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#system-description">System description</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/threewheel-0.0-tutorial.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Ravi Jain.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      
+      |
+      <a href="_sources/threewheel-0.0-tutorial.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
