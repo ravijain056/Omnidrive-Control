@@ -2,7 +2,7 @@
 
 void motorDirInit(void) {
 	SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
-	GPIOPinTypeGPIOOutput(motorDirectionRegister, Motor1|Motor2);
+	GPIOPinTypeGPIOOutput(motorDirectionRegister, C1|C2);
 }
 
 void timerInit(void) {
@@ -20,7 +20,7 @@ void uart0Init(void) {
 	GPIOPinConfigure(GPIO_PA0_U0RX);
 	GPIOPinConfigure(GPIO_PA1_U0TX);
 	GPIOPinTypeUART(GPIO_PORTA_BASE, GPIO_PIN_0 | GPIO_PIN_1);
-	UARTConfigSetExpClk(UART0_BASE, SysCtlClockGet(), 115200,(UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE | UART_CONFIG_PAR_NONE));
+	UARTConfigSetExpClk(UART0_BASE, SysCtlClockGet(), 38400,(UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE | UART_CONFIG_PAR_NONE));
 }
 
 void uart1Init(void) {
@@ -50,7 +50,7 @@ void pwmInit(void) {
 	GPIOPinTypePWM(GPIO_PORTD_BASE, GPIO_PIN_1);
 	GPIOPinConfigure(GPIO_PD1_M1PWM1);
 	PWMGenConfigure(PWM1_BASE, PWM_GEN_0, PWM_GEN_MODE_DOWN);
-	PWMGenPeriodSet(PWM1_BASE, PWM_GEN_0, 1000);
+	PWMGenPeriodSet(PWM1_BASE, PWM_GEN_0, SysCtlClockGet()/(64*PWMfrequency));
 	PWMOutputState(PWM1_BASE, PWM_OUT_1_BIT, true);
 	PWMGenEnable(PWM1_BASE, PWM_GEN_0);
 }
@@ -65,8 +65,10 @@ void qeiInit(void) {
 	GPIOPinTypeQEI(GPIO_PORTF_BASE, GPIO_PIN_1);
 	GPIOPinConfigure(GPIO_PF0_PHA0);
 	GPIOPinConfigure(GPIO_PF1_PHB0);
-	QEIConfigure(QEI0_BASE,QEI_CONFIG_QUADRATURE,3999);
-	QEIVelocityConfigure(QEI0_BASE, QEI_VELDIV_1,1000000);
+	QEIConfigure(QEI0_BASE,QEI_CONFIG_CAPTURE_A_B | QEI_CONFIG_QUADRATURE | QEI_CONFIG_NO_RESET | QEI_CONFIG_NO_SWAP,3999);
+	QEIVelocityConfigure(QEI0_BASE, QEI_VELDIV_1, SysCtlClockGet()/QEIfrequency);
 	QEIVelocityEnable(QEI0_BASE);
-	QEIEnable(QEI0_BASE);
+    QEIIntEnable(QEI0_BASE, QEI_INTTIMER);
+    IntEnable(INT_QEI0);
+    QEIEnable(QEI0_BASE);
 }

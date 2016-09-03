@@ -1,20 +1,27 @@
 #include "common.h"
 
 void setPWM(int pwm) {
+	if(pwm > maxPWM) {
+		pwm = maxPWM;
+	} else if(pwm < -maxPWM) {
+		pwm = -maxPWM;
+	}
 	if(pwm > 0) {
-		GPIOPinWrite(motorDirectionRegister,Motor1|Motor2,0x08);
+		GPIOPinWrite(motorDirectionRegister,C1|C2,0x08);
 		PWMPulseWidthSet(PWM1_BASE, PWM_OUT_1, pwm);
 	} else if(pwm < 0) {
-		GPIOPinWrite(motorDirectionRegister,Motor1|Motor2,0x04);
+		GPIOPinWrite(motorDirectionRegister,C1|C2,0x04);
 		PWMPulseWidthSet(PWM1_BASE, PWM_OUT_1, -pwm);
 	} else {
-		GPIOPinWrite(motorDirectionRegister,Motor1|Motor2,0x00);
+		GPIOPinWrite(motorDirectionRegister,C1|C2,0x00);
 		PWMPulseWidthSet(PWM1_BASE, PWM_OUT_1, 0);
 	}
 }
 
-int calculateRPM(void) {
-	return (-QEIVelocityGet(QEI0_BASE)*QEIDirectionGet(QEI0_BASE));
+float calculateRPM(void) {
+	int rpm = (-QEIVelocityGet(QEI0_BASE)*QEIDirectionGet(QEI0_BASE))*QEIfrequency;
+	float RPM = rpm * 0.015;
+	return RPM;
 }
 
 unsigned int absolute(int x) {

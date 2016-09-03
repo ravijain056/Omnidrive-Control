@@ -5,7 +5,7 @@ void motorDirInit(void) {
 	HWREG(GPIO_PORTF_BASE + GPIO_O_LOCK) = GPIO_LOCK_KEY;
 	HWREG(GPIO_PORTF_BASE + GPIO_O_CR) |= 0x01;
 	HWREG(GPIO_PORTF_BASE + GPIO_O_LOCK) = 0;
-	GPIOPinTypeGPIOOutput(motorDirectionRegister, Front1|Front2|Back1|Back2);
+	GPIOPinTypeGPIOOutput(motorDirectionRegister, A1|A2|B1|B2);
 }
 
 void timerInit(void) {
@@ -23,7 +23,16 @@ void uart0Init(void) {
 	GPIOPinConfigure(GPIO_PA0_U0RX);
 	GPIOPinConfigure(GPIO_PA1_U0TX);
 	GPIOPinTypeUART(GPIO_PORTA_BASE, GPIO_PIN_0 | GPIO_PIN_1);
-	UARTConfigSetExpClk(UART0_BASE, SysCtlClockGet(), 115200,(UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE | UART_CONFIG_PAR_NONE));
+	UARTConfigSetExpClk(UART0_BASE, SysCtlClockGet(), 38400,(UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE | UART_CONFIG_PAR_NONE));
+}
+
+void uart1Init(void) {
+	SysCtlPeripheralEnable(SYSCTL_PERIPH_UART1);
+	SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
+	GPIOPinConfigure(GPIO_PB0_U1RX);
+	GPIOPinConfigure(GPIO_PB1_U1TX);
+	GPIOPinTypeUART(GPIO_PORTB_BASE, GPIO_PIN_0 | GPIO_PIN_1);
+	UARTConfigSetExpClk(UART1_BASE, SysCtlClockGet(), 38400,(UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE | UART_CONFIG_PAR_NONE));
 }
 
 void uart5Init(void) {
@@ -46,7 +55,7 @@ void pwmInit(void) {
 	GPIOPinConfigure(GPIO_PD0_M1PWM0);
 	GPIOPinConfigure(GPIO_PD1_M1PWM1);
 	PWMGenConfigure(PWM1_BASE, PWM_GEN_0, PWM_GEN_MODE_DOWN);
-	PWMGenPeriodSet(PWM1_BASE, PWM_GEN_0, 1000);
+	PWMGenPeriodSet(PWM1_BASE, PWM_GEN_0, SysCtlClockGet()/(64*PWMfrequency));
 	PWMOutputState(PWM1_BASE, PWM_OUT_0_BIT, true);
 	PWMOutputState(PWM1_BASE, PWM_OUT_1_BIT, true);
 	PWMGenEnable(PWM1_BASE, PWM_GEN_0);
@@ -61,9 +70,11 @@ void qeiInit(void) {
 	GPIOPinTypeQEI(GPIO_PORTD_BASE, GPIO_PIN_7);
 	GPIOPinConfigure(GPIO_PD6_PHA0);
 	GPIOPinConfigure(GPIO_PD7_PHB0);
-	QEIConfigure(QEI0_BASE,QEI_CONFIG_QUADRATURE,3999);
-	QEIVelocityConfigure(QEI0_BASE,QEI_VELDIV_1,1000000);
+	QEIConfigure(QEI0_BASE,QEI_CONFIG_CAPTURE_A_B | QEI_CONFIG_QUADRATURE | QEI_CONFIG_NO_RESET | QEI_CONFIG_NO_SWAP,3999);
+	QEIVelocityConfigure(QEI0_BASE,QEI_VELDIV_1,SysCtlClockGet()/QEIfrequency);
 	QEIVelocityEnable(QEI0_BASE);
+	QEIIntEnable(QEI0_BASE, QEI_INTTIMER);
+	IntEnable(INT_QEI0);
 	QEIEnable(QEI0_BASE);
 
 	SysCtlPeripheralEnable(SYSCTL_PERIPH_QEI1);
@@ -72,8 +83,11 @@ void qeiInit(void) {
 	GPIOPinTypeQEI(GPIO_PORTC_BASE, GPIO_PIN_6);
 	GPIOPinConfigure(GPIO_PC5_PHA1);
 	GPIOPinConfigure(GPIO_PC6_PHB1);
-	QEIConfigure(QEI1_BASE,QEI_CONFIG_QUADRATURE,3999);
-	QEIVelocityConfigure(QEI1_BASE, QEI_VELDIV_1,1000000);
+	QEIConfigure(QEI1_BASE,QEI_CONFIG_CAPTURE_A_B | QEI_CONFIG_QUADRATURE | QEI_CONFIG_NO_RESET | QEI_CONFIG_NO_SWAP,3999);
+	QEIVelocityConfigure(QEI1_BASE,QEI_VELDIV_1,SysCtlClockGet()/QEIfrequency);
 	QEIVelocityEnable(QEI1_BASE);
+	QEIIntEnable(QEI1_BASE, QEI_INTTIMER);
+	IntEnable(INT_QEI1);
 	QEIEnable(QEI1_BASE);
+
 }

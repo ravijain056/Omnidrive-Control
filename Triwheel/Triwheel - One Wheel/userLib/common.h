@@ -20,14 +20,17 @@
 
 enum {Front, Back};
 
-#define PIDfrequency 1000
+#define PIDfrequency 200
 #define PWMfrequency 2000
+#define QEIfrequency 40
 #define motorDirectionRegister GPIO_PORTF_BASE
-#define Motor1 GPIO_PIN_2
-#define Motor2 GPIO_PIN_3
+#define C1 GPIO_PIN_2
+#define C2 GPIO_PIN_3
+
+extern int32_t maxPWM, minPWM;
 
 void setPWM(int pwm);
-int calculateRPM(void);
+float calculateRPM(void);
 unsigned absolute(int x);
 void UART_TransmitString(char* string,int i);
 void UART_OutDec(int x, int i);
