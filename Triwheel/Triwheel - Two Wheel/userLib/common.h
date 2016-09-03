@@ -18,15 +18,17 @@
 #include "driverlib/pwm.h"
 #include "driverlib/qei.h"
 
-enum {Front, Back};
+enum {A, B};
+extern int32_t maxPWM, minPWM;
 
-#define PIDfrequency 1000
+#define PIDfrequency 200
 #define PWMfrequency 2000
+#define QEIfrequency 40
 #define motorDirectionRegister GPIO_PORTF_BASE
-#define Front1 GPIO_PIN_0
-#define Front2 GPIO_PIN_1
-#define Back1 GPIO_PIN_2
-#define Back2 GPIO_PIN_3
+#define A1 GPIO_PIN_0
+#define A2 GPIO_PIN_1
+#define B1 GPIO_PIN_2
+#define B2 GPIO_PIN_3
 
 void setPWM(int pwm,int i);
 int calculateRPM(int i);
@@ -34,5 +36,6 @@ unsigned absolute(int x);
 void UART_TransmitString(char* string,int i);
 void UART_OutDec(int x, int i);
 void GraphPlot0(int data1, int data2, int data3, int data4);
+void GraphPlot1(int data1, int data2, int data3, int data4);
 
 #endif

@@ -1,36 +1,45 @@
 #include "common.h"
 
 void setPWM(int pwm,int i) {
-	if(i == Front) {
+	if(pwm > maxPWM) {
+		pwm = maxPWM;
+	} else if(pwm < -maxPWM) {
+		pwm = -maxPWM;
+	}
+	if(i == A) {
 		if(pwm > 0) {
-			GPIOPinWrite(motorDirectionRegister,Front1|Front2,0x02);
+			GPIOPinWrite(motorDirectionRegister,A1|A2,0x02);
 			PWMPulseWidthSet(PWM1_BASE, PWM_OUT_0, pwm);
 		} else if(pwm < 0) {
-			GPIOPinWrite(motorDirectionRegister,Front1|Front2,0x01);
+			GPIOPinWrite(motorDirectionRegister,A1|A2,0x01);
 			PWMPulseWidthSet(PWM1_BASE, PWM_OUT_0, -pwm);
 		} else {
-			GPIOPinWrite(motorDirectionRegister,Front1|Front2,0x00);
+			GPIOPinWrite(motorDirectionRegister,A1|A2,0x00);
 			PWMPulseWidthSet(PWM1_BASE, PWM_OUT_0, 0);
 		}
-	} else if(i == Back) {
+	} else if(i == B) {
 		if(pwm > 0) {
-			GPIOPinWrite(motorDirectionRegister,Back1|Back2,0x08);
+			GPIOPinWrite(motorDirectionRegister,B1|B2,0x08);
 			PWMPulseWidthSet(PWM1_BASE, PWM_OUT_1, pwm);
 		} else if(pwm < 0) {
-			GPIOPinWrite(motorDirectionRegister,Back1|Back2,0x04);
+			GPIOPinWrite(motorDirectionRegister,B1|B2,0x04);
 			PWMPulseWidthSet(PWM1_BASE, PWM_OUT_1, -pwm);
 		} else {
-			GPIOPinWrite(motorDirectionRegister,Back1|Back2,0x00);
+			GPIOPinWrite(motorDirectionRegister,B1|B2,0x00);
 			PWMPulseWidthSet(PWM1_BASE, PWM_OUT_1, 0);
 		}
 	}
 }
 
 int calculateRPM(int i) {
-	if(i == Front) {
-		return (-QEIVelocityGet(QEI0_BASE)*QEIDirectionGet(QEI0_BASE));
-	} else if(i == Back) {
-		return(-QEIVelocityGet(QEI1_BASE)*QEIDirectionGet(QEI1_BASE));
+	if(i == A) {
+		int rpm = (QEIVelocityGet(QEI0_BASE)*QEIDirectionGet(QEI0_BASE))*QEIfrequency;
+		float RPM = rpm * 0.015;
+		return RPM;
+	} else if(i == B) {
+		int rpm = (-QEIVelocityGet(QEI1_BASE)*QEIDirectionGet(QEI1_BASE))*QEIfrequency;
+		float RPM = rpm * 0.015;
+		return RPM;
 	} else {
 		return 0;
 	}
@@ -152,4 +161,19 @@ void GraphPlot0(int data1, int data2, int data3, int data4){
 	UARTCharPut(UART0_BASE,(((int)data3 & 0xFF00) >> 8));
 	UARTCharPut(UART0_BASE,(int)data4 & 0x00FF);
 	UARTCharPut(UART0_BASE,(((int)data4 & 0xFF00) >> 8));
+}
+
+void GraphPlot1(int data1, int data2, int data3, int data4){
+	UARTCharPut(UART1_BASE,0xAB);
+	UARTCharPut(UART1_BASE,0xCD);
+	UARTCharPut(UART1_BASE,0x08);
+	UARTCharPut(UART1_BASE,0x00);
+	UARTCharPut(UART1_BASE,(int)data1 & 0x00FF);
+	UARTCharPut(UART1_BASE,(((int)data1 & 0xFF00) >> 8));
+	UARTCharPut(UART1_BASE,(int)data2 & 0x00FF);
+	UARTCharPut(UART1_BASE,(((int)data2 & 0xFF00) >> 8));
+	UARTCharPut(UART1_BASE,(int)data3 & 0x00FF);
+	UARTCharPut(UART1_BASE,(((int)data3 & 0xFF00) >> 8));
+	UARTCharPut(UART1_BASE,(int)data4 & 0x00FF);
+	UARTCharPut(UART1_BASE,(((int)data4 & 0xFF00) >> 8));
 }
